@@ -1,28 +1,79 @@
-
 name: Playwright Tests
+
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  schedule:
+    - cron: '0 14 * * *'  # Daily at 2:00 PM UTC (9:00 AM EST)
+
 jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v4
+
     - uses: actions/setup-node@v4
       with:
         node-version: lts/*
+
     - name: Install dependencies
       run: npm ci
+
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
+
     - name: Run Playwright tests
-      run: npx playwright test
-    - uses: actions/upload-artifact@v4
+      id: run_tests
+      run: |
+        npx playwright test --reporter=html,line || echo "TESTS_FAILED=true" >> $GITHUB_ENV
+
+    - name: Upload HTML Report
+      uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
         name: playwright-report
         path: playwright-report/
         retention-days: 30
+
+    - name: Set test result status
+      if: ${{ !cancelled() }}
+      run: |
+        if [ "$TESTS_FAILED" = "true" ]; then
+          echo "TEST_STATUS=❌ FAILED" >> $GITHUB_ENV
+          echo "EMAIL_SUBJECT=❌ Playwright Tests FAILED - $(date +'%Y-%m-%d')" >> $GITHUB_ENV
+        else
+          echo "TEST_STATUS=✅ PASSED" >> $GITHUB_ENV
+          echo "EMAIL_SUBJECT=✅ Playwright Tests PASSED - $(date +'%Y-%m-%d')" >> $GITHUB_ENV
+        fi
+
+    - name: Send email with test results
+      if: ${{ !cancelled() }}
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        secure: true
+        username: ${{ secrets.MAIL_USERNAME }}
+        password: ${{ secrets.MAIL_PASSWORD }}
+        subject: ${{ env.EMAIL_SUBJECT }}
+        to: ssugathan@mhainc.com
+        from: Playwright CI <${{ secrets.MAIL_USERNAME }}>
+        body: |
+          Hello,
+
+          Your daily Playwright test run has completed.
+
+          Status: ${{ env.TEST_STATUS }}
+          Date: ${{ github.run_started_at }}
+          Branch: ${{ github.ref_name }}
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          📊 View the full HTML report:
+          Go to the Actions tab → select this run → download "playwright-report" artifact.
+
+          Regards,
+          GitHub Actions CI
