@@ -25,7 +25,20 @@ export default defineConfig({
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['html'],
-    ['junit', { outputFile: 'results/junit-results.xml' }]
+    // ['playwright-xray', {
+    //   jira: {
+    //     url: process.env.JIRA_URL,          // e.g. https://yourcompany.atlassian.net
+    //     type: 'cloud',
+    //   },
+    //   xray: {
+    //     uploadResults: true,
+    //     testExecutionKey: process.env.XRAY_TEST_EXECUTION_KEY,  // e.g. MIA-123
+    //   },
+    //   cloud: {
+    //     client_id: process.env.XRAY_CLIENT_ID,
+    //     client_secret: process.env.XRAY_CLIENT_SECRET,
+    //   }
+    // }]
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
