@@ -54,14 +54,12 @@ jobs:
       if: ${{ !cancelled() }}
       uses: dawidd6/action-send-mail@v3
       with:
-        server_address: smtp.office365.com
-        server_port: 587
+        server_address: smtp.mhainc.com
+        server_port: 25
         secure: false
-        username: ${{ secrets.MAIL_USERNAME }}
-        password: ${{ secrets.MAIL_PASSWORD }}
         subject: ${{ env.EMAIL_SUBJECT }}
         to: ssugathan@mhainc.com
-        from: Playwright CI <${{ secrets.MAIL_USERNAME }}>
+        from: Playwright CI <QA-UITest@mhainc.com>
         body: |
           Hello,
 
