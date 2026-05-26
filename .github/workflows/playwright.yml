@@ -30,9 +30,8 @@ jobs:
       run: npx playwright install --with-deps
 
     - name: Run Playwright tests
-      id: run_tests
       run: |
-        npx playwright test --reporter=html,line || echo "TESTS_FAILED=true" >> $GITHUB_ENV
+        npx playwright test || true
 
     - name: Upload HTML Report
       uses: actions/upload-artifact@v4
@@ -41,4 +40,21 @@ jobs:
         name: playwright-report
         path: playwright-report/
         retention-days: 30
+
+    - name: Upload JUnit results to Xray (Jira Cloud)
+      if: ${{ !cancelled() }}
+      run: |
+        # Authenticate with Xray and get token
+        TOKEN=$(curl -s -X POST \
+          "https://xray.cloud.getxray.app/api/v2/authenticate" \
+          -H "Content-Type: application/json" \
+          -d "{\"client_id\": \"${{ secrets.XRAY_CLIENT_ID }}\", \"client_secret\": \"${{ secrets.XRAY_CLIENT_SECRET }}\"}" \
+          | tr -d '"')
+
+        # Upload JUnit XML results to Xray
+        curl -s -X POST \
+          "https://xray.cloud.getxray.app/api/v2/import/execution/junit" \
+          -H "Authorization: Bearer ${TOKEN}" \
+          -H "Content-Type: text/xml" \
+          --data-binary @results/junit-results.xml
 
