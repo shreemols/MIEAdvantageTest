@@ -42,39 +42,3 @@ jobs:
         path: playwright-report/
         retention-days: 30
 
-    - name: Set test result status
-      if: ${{ !cancelled() }}
-      run: |
-        if [ "$TESTS_FAILED" = "true" ]; then
-          echo "TEST_STATUS=❌ FAILED" >> $GITHUB_ENV
-          echo "EMAIL_SUBJECT=❌ Playwright Tests FAILED - $(date +'%Y-%m-%d')" >> $GITHUB_ENV
-        else
-          echo "TEST_STATUS=✅ PASSED" >> $GITHUB_ENV
-          echo "EMAIL_SUBJECT=✅ Playwright Tests PASSED - $(date +'%Y-%m-%d')" >> $GITHUB_ENV
-        fi
-
-    - name: Send email with test results
-      if: ${{ !cancelled() }}
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.mhainc.com
-        server_port: 25
-        secure: false
-        subject: ${{ env.EMAIL_SUBJECT }}
-        to: ssugathan@mhainc.com
-        from: Playwright CI <QA-UITest@mhainc.com>
-        body: |
-          Hello,
-
-          Your daily Playwright test run has completed.
-
-          Status: ${{ env.TEST_STATUS }}
-          Date: ${{ github.run_started_at }}
-          Branch: ${{ github.ref_name }}
-          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-          📊 View the full HTML report:
-          Go to the Actions tab → select this run → download "playwright-report" artifact.
-
-          Regards,
-          GitHub Actions CI
